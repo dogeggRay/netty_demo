@@ -3,9 +3,7 @@ package org.netty.model.utils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import org.netty.model.command.Command;
-import org.netty.model.packet.LoginRequestPacket;
-import org.netty.model.packet.LoginResponsePacket;
-import org.netty.model.packet.Packet;
+import org.netty.model.packet.*;
 import org.netty.model.serializer.JSONSerializer;
 import org.netty.model.serializer.Serializer;
 
@@ -25,37 +23,36 @@ public class PacketCodeC {
         packetTypeMap = new HashMap<>();
         packetTypeMap.put(Command.LOGIN_REQUEST, LoginRequestPacket.class);
         packetTypeMap.put(Command.LOGIN_RESPONSE, LoginResponsePacket.class);
+        packetTypeMap.put(Command.MESSAGE_REQUEST, MessageRequestPacket.class);
+        packetTypeMap.put(Command.MESSAGE_RESPONSE, MessageResponsePacket.class);
 
         serializerMap = new HashMap<>();
         Serializer serializer = new JSONSerializer();
         serializerMap.put(serializer.getSerializerAlgorithm(), serializer);
     }
 
-    public ByteBuf encode(Packet packet){
+    public void encode(ByteBuf byteBuf,Packet packet){
         byte[] bytes = Serializer.DEFAULT.serialize(packet);
 
-        ByteBuf byteBuf = ByteBufAllocator.DEFAULT.ioBuffer();
         byteBuf.writeInt(MAGIC_NUMBER);
         byteBuf.writeByte(packet.getVersion());
         byteBuf.writeByte(Serializer.DEFAULT.getSerializerAlgorithm());
         byteBuf.writeByte(packet.getCommand());
         byteBuf.writeInt(bytes.length);
         byteBuf.writeBytes(bytes);
-
-        return byteBuf;
     }
 
-    public Packet decode(ByteBuf bb){
-        bb.skipBytes(4);
-        bb.skipBytes(1);
-        byte serializeAlgorithm = bb.readByte();
+    public Packet decode(ByteBuf byteBuf){
+        byteBuf.skipBytes(4);
+        byteBuf.skipBytes(1);
+        byte serializeAlgorithm = byteBuf.readByte();
 
-        byte command = bb.readByte();
+        byte command = byteBuf.readByte();
 
-        int length = bb.readInt();
+        int length = byteBuf.readInt();
 
         byte[] bytes = new byte[length];
-        bb.readBytes(bytes);
+        byteBuf.readBytes(bytes);
 
         Class<? extends Packet> requestType = getRequestType(command);
         Serializer serializer = getSerializer(serializeAlgorithm);

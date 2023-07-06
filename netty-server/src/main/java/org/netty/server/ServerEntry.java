@@ -5,7 +5,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.netty.server.handler.SLoginHandler;
+import org.netty.common.util.PackageEncoder;
+import org.netty.common.util.PacketDecoder;
+import org.netty.server.handler.*;
 
 public class ServerEntry {
     public static void main(String[] args) {
@@ -18,7 +20,11 @@ public class ServerEntry {
                     @Override
                     protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
                         System.out.println("initChannel");
-                        nioSocketChannel.pipeline().addLast(new SLoginHandler());
+                        nioSocketChannel.pipeline().addLast(new PacketDecoder());
+                        nioSocketChannel.pipeline().addLast(new LoginRequestHandler());
+                        nioSocketChannel.pipeline().addLast(new MessageRequestHandler());
+                        nioSocketChannel.pipeline().addLast(new PackageEncoder());
+
                     }
                 }).bind(8084);
     }

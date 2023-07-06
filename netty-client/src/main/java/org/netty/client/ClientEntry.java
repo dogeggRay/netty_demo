@@ -1,17 +1,18 @@
 package org.netty.client;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.netty.client.handler.DemoHandler;
+import org.netty.client.handler.LoginResponseHandler;
+import org.netty.client.handler.MessageResponseHandler;
 import org.netty.common.util.LoginUtil;
+import org.netty.common.util.PackageEncoder;
+import org.netty.common.util.PacketDecoder;
 import org.netty.model.packet.MessageRequestPacket;
-import org.netty.model.utils.PacketCodeC;
 
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +29,10 @@ public class ClientEntry {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
-                        socketChannel.pipeline().addLast(new DemoHandler());
+                        socketChannel.pipeline().addLast(new PacketDecoder());
+                        socketChannel.pipeline().addLast(new LoginResponseHandler());
+                        socketChannel.pipeline().addLast(new MessageResponseHandler());
+                        socketChannel.pipeline().addLast(new PackageEncoder());
                     }
                 });
         connect(bootstrap,"localhost",8084);
@@ -56,14 +60,13 @@ public class ClientEntry {
         new Thread(() -> {
            while(!Thread.interrupted()){
                if(LoginUtil.hasLogin(channel)){
-                   System.out.println("开始发送消息至服务端：");
                    Scanner sc = new Scanner(System.in);
                    String line = sc.nextLine();
 
+                   System.out.println("开始发送消息至服务端："+line);
                    MessageRequestPacket mrp = new MessageRequestPacket();
                    mrp.setMessage(line);
-                   ByteBuf bb = PacketCodeC.INSTANCE.encode(mrp);
-                   channel.writeAndFlush(bb);
+                   channel.writeAndFlush(mrp);
                }
            }
         }).start();
