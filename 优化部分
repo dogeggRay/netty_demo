@@ -1,0 +1,6 @@
+server:
+1 AuthHandler 验证通过后，再第二次消息到来后即可remove，去除冗余校验
+
+通用:
+1 无状态的handler不需要每次来新连接就new，可以使用单例模式
+2 消息编码/解码统一使用MessageToMessageCodeC在责任链头部处理

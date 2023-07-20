@@ -7,12 +7,11 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import org.netty.client.handler.LoginResponseHandler;
-import org.netty.client.handler.MessageResponseHandler;
-import org.netty.common.util.LoginUtil;
-import org.netty.common.util.PackageEncoder;
-import org.netty.common.util.PacketDecoder;
-import org.netty.model.packet.MessageRequestPacket;
+import org.netty.client.handler.*;
+import org.netty.common.command.ConsoleCommandManager;
+import org.netty.common.command.LoginConsoleCommand;
+import org.netty.common.handler.IMIdleStateHandler;
+import org.netty.common.util.*;
 
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -29,10 +28,21 @@ public class ClientEntry {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
-                        socketChannel.pipeline().addLast(new PacketDecoder());
+                        socketChannel.pipeline().addLast(new IMIdleStateHandler());
+                        socketChannel.pipeline().addLast(new Spliter());
+                        socketChannel.pipeline().addLast(new PacketCodecHandler());
                         socketChannel.pipeline().addLast(new LoginResponseHandler());
+                        socketChannel.pipeline().addLast(new LogoutResponseHandler());
                         socketChannel.pipeline().addLast(new MessageResponseHandler());
-                        socketChannel.pipeline().addLast(new PackageEncoder());
+                        socketChannel.pipeline().addLast(new CreateGroupResponseHandler());
+                        socketChannel.pipeline().addLast(new JoinGroupResponseHandler());
+                        // 退群响应处理器
+                        socketChannel.pipeline().addLast(new QuitGroupResponseHandler());
+                        // 获取群成员响应处理器
+                        socketChannel.pipeline().addLast(new ListGroupMembersResponseHandler());
+                        socketChannel.pipeline().addLast(new GroupMessageResponseHandler());
+
+                        socketChannel.pipeline().addLast(new HeartBeatTimerHandler());
                     }
                 });
         connect(bootstrap,"localhost",8084);
@@ -57,16 +67,16 @@ public class ClientEntry {
     }
 
     private static void startConsoleThread(Channel channel){
+        LoginConsoleCommand loginConsoleCommand = new LoginConsoleCommand();
+        ConsoleCommandManager consoleCommandManager = new ConsoleCommandManager();
+
+        Scanner scanner = new Scanner(System.in);
         new Thread(() -> {
            while(!Thread.interrupted()){
-               if(LoginUtil.hasLogin(channel)){
-                   Scanner sc = new Scanner(System.in);
-                   String line = sc.nextLine();
-
-                   System.out.println("开始发送消息至服务端："+line);
-                   MessageRequestPacket mrp = new MessageRequestPacket();
-                   mrp.setMessage(line);
-                   channel.writeAndFlush(mrp);
+               if (!SessionUtil.hasLogin(channel)) {
+                   loginConsoleCommand.exec(scanner,channel);
+               }else {
+                   consoleCommandManager.exec(scanner,channel);
                }
            }
         }).start();

@@ -6,6 +6,9 @@ import org.netty.model.command.Command;
 @Data
 public class MessageResponsePacket  extends Packet{
 
+    private String fromUserId;
+
+    private String fromUserName;
     private String message;
 
     @Override

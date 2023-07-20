@@ -1,9 +1,10 @@
 package org.netty.model.utils;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import org.netty.model.command.Command;
 import org.netty.model.packet.*;
+import org.netty.model.packet.request.*;
+import org.netty.model.packet.response.*;
 import org.netty.model.serializer.JSONSerializer;
 import org.netty.model.serializer.Serializer;
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PacketCodeC {
-    private static final int MAGIC_NUMBER = 0x12345678;
+    public static final int MAGIC_NUMBER = 0x12345678;
 
     public static final PacketCodeC INSTANCE = new PacketCodeC();
 
@@ -25,6 +26,18 @@ public class PacketCodeC {
         packetTypeMap.put(Command.LOGIN_RESPONSE, LoginResponsePacket.class);
         packetTypeMap.put(Command.MESSAGE_REQUEST, MessageRequestPacket.class);
         packetTypeMap.put(Command.MESSAGE_RESPONSE, MessageResponsePacket.class);
+        packetTypeMap.put(Command.LOGOUT_REQUEST, LogoutRequestPacket.class);
+        packetTypeMap.put(Command.LOGOUT_RESPONSE, LogoutResponsePacket.class);
+        packetTypeMap.put(Command.CREATE_GROUP_REQUEST, CreateGroupRequestPacket.class);
+        packetTypeMap.put(Command.CREATE_GROUP_RESPONSE, CreateGroupResponsePacket.class);
+        packetTypeMap.put(Command.JOIN_GROUP_REQUEST, JoinGroupRequestPacket.class);
+        packetTypeMap.put(Command.JOIN_GROUP_RESPONSE, JoinGroupResponsePacket.class);
+        packetTypeMap.put(Command.QUIT_GROUP_REQUEST, QuitGroupRequestPacket.class);
+        packetTypeMap.put(Command.QUIT_GROUP_RESPONSE, QuitGroupResponsePacket.class);
+        packetTypeMap.put(Command.LIST_GROUP_MEMBERS_REQUEST, ListGroupMembersRequestPacket.class);
+        packetTypeMap.put(Command.LIST_GROUP_MEMBERS_RESPONSE, ListGroupMembersResponsePacket.class);
+        packetTypeMap.put(Command.GROUP_MESSAGE_REQUEST, GroupMessageRequestPacket.class);
+        packetTypeMap.put(Command.GROUP_MESSAGE_RESPONSE, GroupMessageResponsePacket.class);
 
         serializerMap = new HashMap<>();
         Serializer serializer = new JSONSerializer();
